@@ -9,7 +9,8 @@ import path from 'path';
 import routes from './routes';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '7860');
+const HOST = '0.0.0.0';
 const START_TIME = Date.now();
 
 // 安全头
@@ -73,8 +74,13 @@ app.get('/health', (req, res) => {
   });
 });
 
+// HF Spaces 健康检查根路径
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'health-assessment-api' });
+});
+
 // 启动
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(`健康测评后端服务运行在 http://localhost:${PORT}`);
 });
 
