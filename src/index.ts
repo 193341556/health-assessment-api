@@ -9,6 +9,8 @@ import path from 'path';
 import routes from './routes';
 
 const app = express();
+app.set('trust proxy', 1);
+
 const PORT = parseInt(process.env.PORT || '7860');
 const HOST = '0.0.0.0';
 const START_TIME = Date.now();
