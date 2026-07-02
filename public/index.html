@@ -197,13 +197,13 @@
       <div class="step active" id="step1">
         <div class="step-title">👋 您是？</div>
         <div class="radio-group">
-          <label class="radio-item" onclick="selectRadio(this, 'gender', 'male')">
-            <input type="radio" name="gender" value="male">
+          <label class="radio-item">
+            <input type="radio" name="gender" value="male" onclick="selectRadio(this.parentElement, 'gender', 'male')">
             <div class="icon">👨</div>
             <div class="label">男</div>
           </label>
-          <label class="radio-item" onclick="selectRadio(this, 'gender', 'female')">
-            <input type="radio" name="gender" value="female">
+          <label class="radio-item">
+            <input type="radio" name="gender" value="female" onclick="selectRadio(this.parentElement, 'gender', 'female')">
             <div class="icon">👩</div>
             <div class="label">女</div>
           </label>
@@ -256,26 +256,26 @@
         <div class="step-title">🏃 活动频率</div>
         <div class="step-desc">选择您每周的运动强度</div>
         <div class="radio-group" style="grid-template-columns: 1fr;">
-          <label class="radio-item" onclick="selectRadio(this, 'activity_level', 'sedentary')">
-            <input type="radio" name="activity_level" value="sedentary">
+          <label class="radio-item">
+            <input type="radio" name="activity_level" value="sedentary" onclick="selectRadio(this.parentElement, 'activity_level', 'sedentary')">
             <div class="icon">🛋️</div>
             <div class="label">久坐不动</div>
             <div class="hint" style="text-align:center">几乎不运动</div>
           </label>
-          <label class="radio-item" onclick="selectRadio(this, 'activity_level', 'light')">
-            <input type="radio" name="activity_level" value="light">
+          <label class="radio-item">
+            <input type="radio" name="activity_level" value="light" onclick="selectRadio(this.parentElement, 'activity_level', 'light')">
             <div class="icon">🚶</div>
             <div class="label">轻度活动</div>
             <div class="hint" style="text-align:center">每周1-2次运动</div>
           </label>
-          <label class="radio-item" onclick="selectRadio(this, 'activity_level', 'moderate')">
-            <input type="radio" name="activity_level" value="moderate">
+          <label class="radio-item">
+            <input type="radio" name="activity_level" value="moderate" onclick="selectRadio(this.parentElement, 'activity_level', 'moderate')">
             <div class="icon">🏃</div>
             <div class="label">中度活动</div>
             <div class="hint" style="text-align:center">每周3-4次运动</div>
           </label>
-          <label class="radio-item" onclick="selectRadio(this, 'activity_level', 'active')">
-            <input type="radio" name="activity_level" value="active">
+          <label class="radio-item">
+            <input type="radio" name="activity_level" value="active" onclick="selectRadio(this.parentElement, 'activity_level', 'active')">
             <div class="icon">💪</div>
             <div class="label">高度活动</div>
             <div class="hint" style="text-align:center">每周5次以上运动</div>
