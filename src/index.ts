@@ -15,8 +15,10 @@ const PORT = parseInt(process.env.PORT || '7860');
 const HOST = '0.0.0.0';
 const START_TIME = Date.now();
 
-// 安全头
-app.use(helmet());
+// 安全头（禁用 CSP，因为前端使用内联脚本）
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 
 // 限流：每个 IP 每分钟 100 次请求
 app.use(rateLimit({
