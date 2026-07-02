@@ -16,5 +16,5 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git remote add space https://wzc183265:${HF_TOKEN}@huggingface.co/spaces/wzc183265/health-assessment-api
-          git push space master:master --force
+          git remote add space https://huggingface.co/spaces/wzc183265/health-assessment-api
+          git -c http.extraheader="Authorization: Basic $(printf 'wzc183265:%s' "$HF_TOKEN" | base64 -w0)" push space master:master --force
