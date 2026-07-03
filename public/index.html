@@ -517,17 +517,23 @@
 
     function drawWeightChart(weeklyTargets, targetWeight) {
       const targets = weeklyTargets.map(Number);
-      const startWeight = targets[0];
       const canvas = document.getElementById('weightChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const w = canvas.width, h = canvas.height;
+
+      // 防止缓存旧数据：每次画之前强制重置宽高（触发 clear）
+      const w = canvas.width = 600;
+      const h = canvas.height = 220;
       const pad = { top: 20, right: 20, bottom: 40, left: 50 };
       const cw = w - pad.left - pad.right;
       const ch = h - pad.top - pad.bottom;
       const weeks = targets.length;
+      if (weeks === 0) return;
+
       const minW = Math.min(...targets) - 2;
-      const maxW = startWeight + 2;
+      const maxW = Math.max(...targets) + 2;
+      // 防 NaN：minW === maxW 时给一个默认范围
+      const range = maxW - minW || 1;
 
       ctx.clearRect(0, 0, w, h);
 
@@ -551,15 +557,16 @@
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'right';
       for (let i = 0; i <= 4; i++) {
-        const val = maxW - (maxW - minW) * (i / 4);
+        const val = maxW - range * (i / 4);
         const y = pad.top + (ch / 4) * i;
         ctx.fillText(val.toFixed(0) + 'kg', pad.left - 8, y + 4);
       }
 
       // X轴标签（旋转-30°避免重叠）
+      const stepX = weeks === 1 ? 0 : cw / (weeks - 1);
       for (let i = 0; i < weeks; i++) {
-        if (i % Math.ceil(weeks / 6) === 0 || i === weeks - 1) {
-          const x = pad.left + (cw / (weeks - 1)) * i;
+        if (weeks === 1 || i % Math.ceil(weeks / 6) === 0 || i === weeks - 1) {
+          const x = pad.left + stepX * i;
           ctx.save();
           ctx.translate(x, h - pad.bottom + 16);
           ctx.rotate(-Math.PI / 6);
@@ -570,7 +577,7 @@
       }
 
       // 目标线（虚线）
-      const targetY = pad.top + ch - ((Number(targetWeight) - minW) / (maxW - minW)) * ch;
+      const targetY = pad.top + ch - ((Number(targetWeight) - minW) / range) * ch;
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = '#e74c3c';
       ctx.lineWidth = 1.5;
@@ -585,13 +592,12 @@
       ctx.fillText('目标: ' + Number(targetWeight).toFixed(1) + 'kg', pad.left + cw + 5, targetY + 4);
 
       // 曲线
-      const stepX = cw / (weeks - 1);
       ctx.beginPath();
       ctx.strokeStyle = '#4a90d9';
       ctx.lineWidth = 2.5;
       targets.forEach((wt, i) => {
         const x = pad.left + stepX * i;
-        const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
+        const y = pad.top + ch - ((wt - minW) / range) * ch;
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
       ctx.stroke();
@@ -599,7 +605,7 @@
       // 数据点
       targets.forEach((wt, i) => {
         const x = pad.left + stepX * i;
-        const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
+        const y = pad.top + ch - ((wt - minW) / range) * ch;
         ctx.beginPath();
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fillStyle = i === weeks - 1 ? '#e74c3c' : '#4a90d9';
