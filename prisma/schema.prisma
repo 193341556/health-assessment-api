@@ -58,6 +58,7 @@ model AssessmentResults {
 model Subscriptions {
   session_id  String    @id
   status      String    @default("none") @map("status")
+  paid_at     DateTime? @map("paid_at")
   created_at  DateTime  @default(now()) @map("created_at")
   expires_at  DateTime? @map("expires_at")
 

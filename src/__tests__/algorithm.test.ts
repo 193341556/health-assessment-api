@@ -95,7 +95,7 @@ describe('validateInput', () => {
   test('目标体重差距过大', () => {
     const result = validateInput({
       weight_kg: 100,
-      target_weight_kg: 41, // 差距59%，超过60%阈值
+      target_weight_kg: 39, // 差距61%，超过60%阈值
     });
     expect(result.valid).toBe(false);
     expect(result.error).toContain('差距过大');

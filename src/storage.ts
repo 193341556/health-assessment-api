@@ -65,6 +65,14 @@ export async function updateRecord(
     status: AssessmentStatus;
   }>
 ): Promise<AssessmentRecord | undefined> {
+  // current_step 只能前进，不能倒退
+  if (data.current_step !== undefined) {
+    const current = await getRecord(session_id);
+    if (current && data.current_step < current.current_step) {
+      data.current_step = current.current_step;
+    }
+  }
+
   return getPrisma().assessmentRecords.update({
     where: { session_id },
     data: {
@@ -134,7 +142,7 @@ export async function getSubscription(session_id: string): Promise<Subscription 
 export async function activateSubscription(session_id: string): Promise<Subscription | undefined> {
   return getPrisma().subscriptions.update({
     where: { session_id },
-    data: { status: 'active', expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+    data: { status: 'active', paid_at: new Date(), expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
   }) as unknown as Promise<Subscription | undefined>;
 }
 

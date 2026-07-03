@@ -53,6 +53,7 @@ export interface AssessmentResult {
 export interface Subscription {
   session_id: string;
   status: SubscriptionStatus;
+  paid_at: Date | null;
   created_at: Date;
   expires_at: Date | null;
 }

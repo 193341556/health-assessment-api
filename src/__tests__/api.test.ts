@@ -158,7 +158,7 @@ describe('GET /result/:session_id', () => {
     expect(res.body.session_id).toBe(sessionId);
     expect(res.body.bmi).toBeDefined();
     expect(res.body.message).toBeDefined();
-    expect(res.body.recommended_intake_kcal).toBeUndefined();
+    expect(res.body.recommended_intake_kcal).toBe(null);
   });
 });
 
