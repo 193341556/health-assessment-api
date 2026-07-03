@@ -10,6 +10,8 @@ pinned: false
 
 # Health Assessment API
 
+[![CI](https://github.com/193341556/health-assessment-api/actions/workflows/ci.yml/badge.svg)](https://github.com/193341556/health-assessment-api/actions/workflows/ci.yml)
+
 健康测评后端 API 服务
 
 ## 在线演示
@@ -95,7 +97,7 @@ curl -X POST https://wzc183265-health-assessment-api.hf.space/api/v1/pay/{sessio
 ## 已支付测试 Session
 
 ```
-session_id: 639025bdd74043f8be4d2e65e1e0888c
+session_id: 8f9432da9a3547c1a6403f991de772ab
 ```
 
 可用于对比付费前后的差异化返回：
