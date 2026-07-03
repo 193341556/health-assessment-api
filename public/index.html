@@ -556,12 +556,16 @@
         ctx.fillText(val.toFixed(0) + 'kg', pad.left - 8, y + 4);
       }
 
-      // X轴标签
-      ctx.textAlign = 'center';
+      // X轴标签（旋转-30°避免重叠）
       for (let i = 0; i < weeks; i++) {
         if (i % Math.ceil(weeks / 6) === 0 || i === weeks - 1) {
           const x = pad.left + (cw / (weeks - 1)) * i;
-          ctx.fillText('第' + (i + 1) + '周', x, h - pad.bottom + 16);
+          ctx.save();
+          ctx.translate(x, h - pad.bottom + 16);
+          ctx.rotate(-Math.PI / 6);
+          ctx.textAlign = 'center';
+          ctx.fillText('第' + (i + 1) + '周', 0, 0);
+          ctx.restore();
         }
       }
 
