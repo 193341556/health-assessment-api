@@ -148,8 +148,8 @@ export async function createAssessment(): Promise<AssessmentSession> {
     data: {
       session_id,
       expires_at,
-      records: { create: { session_id } },
-      subscriptions: { create: { session_id, status: 'none' } },
+      records: { create: {} },
+      subscriptions: { create: { status: 'none' } },
     },
     include: { records: true, subscriptions: true },
   }) as unknown as Promise<AssessmentSession>;
