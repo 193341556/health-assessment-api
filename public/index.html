@@ -474,6 +474,8 @@
     function showStep(n) {
       document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
       document.getElementById('step' + n).classList.add('active');
+      document.getElementById('progressFill').style.display = n === 6 ? 'none' : '';
+      document.getElementById('stepIndicators').style.display = n === 6 ? 'none' : '';
       currentStep = n;
       updateProgress();
     }
