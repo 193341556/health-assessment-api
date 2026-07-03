@@ -15,10 +15,47 @@ export function calculateBMI(height_cm: number, weight_kg: number): number {
  * 判断 BMI 等级
  */
 export function getBMICategory(bmi: number): string {
-  if (bmi < 18.5) return '偏低';
-  if (bmi < 24) return '正常';
-  if (bmi < 28) return '偏高';
-  return '过高';
+  if (bmi < 18.5) return '体重过轻';
+  if (bmi < 24) return '体重正常';
+  if (bmi < 28) return '超重';
+  return '肥胖';
+}
+
+/**
+ * 计算基础代谢率 (BMR)
+ * 使用 Mifflin-St Jeor 方程
+ */
+export function calculateBMR(
+  gender: Gender,
+  age: number,
+  height_cm: number,
+  weight_kg: number
+): number {
+  if (gender === 'male') {
+    return Math.round(10 * weight_kg + 6.25 * height_cm - 5 * age + 5);
+  } else {
+    return Math.round(10 * weight_kg + 6.25 * height_cm - 5 * age - 161);
+  }
+}
+
+/**
+ * 计算每日总消耗 (TDEE)
+ */
+export function calculateTDEE(
+  gender: Gender,
+  age: number,
+  height_cm: number,
+  weight_kg: number,
+  activity_level: ActivityLevel
+): number {
+  const bmr = calculateBMR(gender, age, height_cm, weight_kg);
+  const activityMultipliers: Record<ActivityLevel, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+  };
+  return Math.round(bmr * activityMultipliers[activity_level]);
 }
 
 /**
@@ -32,24 +69,54 @@ export function calculateRecommendedIntake(
   weight_kg: number,
   activity_level: ActivityLevel
 ): number {
-  // 基础代谢率 (BMR)
-  let bmr: number;
-  if (gender === 'male') {
-    bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + 5;
-  } else {
-    bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age - 161;
+  return calculateTDEE(gender, age, height_cm, weight_kg, activity_level);
+}
+
+/**
+ * 获取健康风险提示
+ */
+export function getHealthRisks(bmi: number): string[] {
+  const risks: string[] = [];
+  if (bmi < 18.5) {
+    risks.push('体重过低可能影响免疫力');
+    risks.push('建议增加营养摄入');
+  } else if (bmi >= 24 && bmi < 28) {
+    risks.push('超重增加心血管疾病风险');
+    risks.push('建议适当增加运动量');
+  } else if (bmi >= 28) {
+    risks.push('肥胖显著增加代谢综合征风险');
+    risks.push('建议咨询医生制定减重计划');
   }
+  return risks;
+}
 
-  // 活动水平乘数
-  const activityMultipliers: Record<ActivityLevel, number> = {
-    sedentary: 1.2,
-    light: 1.375,
-    moderate: 1.55,
-    active: 1.725,
+/**
+ * 获取运动建议
+ */
+export function getExerciseAdvice(activity_level: ActivityLevel): string {
+  const advice: Record<ActivityLevel, string> = {
+    sedentary: '建议从每天散步30分钟开始，逐步增加运动量',
+    light: '建议每周增加2-3次力量训练',
+    moderate: '建议保持当前运动习惯，可尝试高强度间歇训练',
+    active: '建议继续保持，可适当增加力量训练比例',
   };
+  return advice[activity_level];
+}
 
-  const multiplier = activityMultipliers[activity_level];
-  return Math.round(bmr * multiplier);
+/**
+ * 计算三大营养素分配（克）
+ * 蛋白质 30%、碳水 40%、脂肪 30%
+ */
+export function calculateMacros(recommended_kcal: number): {
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+} {
+  return {
+    protein_g: Math.round((recommended_kcal * 0.30) / 4),
+    carbs_g: Math.round((recommended_kcal * 0.40) / 4),
+    fat_g: Math.round((recommended_kcal * 0.30) / 9),
+  };
 }
 
 /**
@@ -61,11 +128,38 @@ export function calculateTargetDate(
   targetWeight: number
 ): Date {
   const weightDiff = Math.abs(currentWeight - targetWeight);
-  // 每周减重 0.75kg 作为平均值
   const weeksToGoal = Math.ceil(weightDiff / 0.75);
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + weeksToGoal * 7);
   return targetDate;
+}
+
+/**
+ * 计算每周目标体重曲线
+ * 返回从当前到目标每周的体重数组
+ */
+export function calculateWeeklyTargets(
+  currentWeight: number,
+  targetWeight: number
+): number[] {
+  const weightDiff = Math.abs(currentWeight - targetWeight);
+  const weeklyLoss = 0.75; // 每周减重 0.75kg
+  const weeks = Math.ceil(weightDiff / weeklyLoss);
+
+  const targets: number[] = [];
+  for (let week = 1; week <= weeks; week++) {
+    const lost = week * weeklyLoss;
+    const isGain = targetWeight > currentWeight;
+    const weight = isGain
+      ? currentWeight + lost
+      : currentWeight - lost;
+    // 确保不会超过目标
+    const finalWeight = isGain
+      ? Math.min(weight, targetWeight)
+      : Math.max(weight, targetWeight);
+    targets.push(Math.round(finalWeight * 10) / 10);
+  }
+  return targets;
 }
 
 /**
@@ -126,24 +220,39 @@ export function computeAssessment(data: {
   activity_level: ActivityLevel;
 }): {
   bmi: number;
+  bmi_category: string;
+  bmr: number;
+  tdee: number;
   recommended_intake_kcal: number;
   target_date: Date;
+  weekly_targets: number[];
+  health_risks: string[];
+  exercise_advice: string;
+  macros: { protein_g: number; carbs_g: number; fat_g: number };
 } {
   const { gender, age, height_cm, weight_kg, target_weight_kg, activity_level } = data;
 
   const bmi = calculateBMI(height_cm, weight_kg);
-  const recommended_intake_kcal = calculateRecommendedIntake(
-    gender,
-    age,
-    height_cm,
-    weight_kg,
-    activity_level
-  );
+  const bmi_category = getBMICategory(bmi);
+  const bmr = calculateBMR(gender, age, height_cm, weight_kg);
+  const tdee = calculateTDEE(gender, age, height_cm, weight_kg, activity_level);
+  const recommended_intake_kcal = calculateRecommendedIntake(gender, age, height_cm, weight_kg, activity_level);
   const target_date = calculateTargetDate(weight_kg, target_weight_kg);
+  const weekly_targets = calculateWeeklyTargets(weight_kg, target_weight_kg);
+  const health_risks = getHealthRisks(bmi);
+  const exercise_advice = getExerciseAdvice(activity_level);
+  const macros = calculateMacros(recommended_intake_kcal);
 
   return {
-    bmi: Math.round(bmi * 100) / 100, // 保留两位小数
+    bmi: Math.round(bmi * 100) / 100,
+    bmi_category,
+    bmr,
+    tdee,
     recommended_intake_kcal,
     target_date,
+    weekly_targets,
+    health_risks,
+    exercise_advice,
+    macros,
   };
 }

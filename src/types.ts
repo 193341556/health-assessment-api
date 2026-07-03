@@ -5,6 +5,12 @@ export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 export type AssessmentStatus = 'draft' | 'completed';
 export type SubscriptionStatus = 'none' | 'active' | 'expired';
 
+export interface MacroNutrients {
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
 // 会话表
 export interface AssessmentSession {
   session_id: string;
@@ -31,8 +37,15 @@ export interface AssessmentRecord {
 export interface AssessmentResult {
   session_id: string;
   bmi: number;
+  bmi_category: string | null;
+  bmr: number | null;
+  tdee: number | null;
   recommended_kcal: number | null;
   target_date: Date | null;
+  weekly_targets: number[] | null;
+  health_risks: string[] | null;
+  exercise_advice: string | null;
+  macros: MacroNutrients | null;
   computed_at: Date;
 }
 

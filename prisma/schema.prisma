@@ -39,8 +39,15 @@ model AssessmentRecords {
 model AssessmentResults {
   session_id       String   @id
   bmi              Decimal  @map("bmi")
+  bmi_category     String?  @map("bmi_category")
+  bmr              Int?     @map("bmr")
+  tdee             Int?     @map("tdee")
   recommended_kcal Int?     @map("recommended_kcal")
   target_date      DateTime? @map("target_date")
+  weekly_targets   Json?    @map("weekly_targets")
+  health_risks     Json?    @map("health_risks")
+  exercise_advice  String?  @map("exercise_advice")
+  macros           Json?    @map("macros")
   computed_at      DateTime @default(now()) @map("computed_at")
 
   session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)

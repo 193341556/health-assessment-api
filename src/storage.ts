@@ -84,14 +84,32 @@ export function updateRecord(
 
 export function createResult(
   session_id: string,
-  data: { bmi: number; recommended_intake_kcal: number; target_date: Date }
+  data: {
+    bmi: number;
+    bmi_category: string;
+    bmr: number;
+    tdee: number;
+    recommended_intake_kcal: number;
+    target_date: Date;
+    weekly_targets: number[];
+    health_risks: string[];
+    exercise_advice: string;
+    macros: { protein_g: number; carbs_g: number; fat_g: number };
+  }
 ): AssessmentResult {
   return getPrisma().assessmentResults.create({
     data: {
       session_id,
       bmi: data.bmi,
+      bmi_category: data.bmi_category,
+      bmr: data.bmr,
+      tdee: data.tdee,
       recommended_kcal: data.recommended_intake_kcal,
       target_date: data.target_date,
+      weekly_targets: data.weekly_targets,
+      health_risks: data.health_risks,
+      exercise_advice: data.exercise_advice,
+      macros: data.macros,
     },
   }) as unknown as AssessmentResult;
 }

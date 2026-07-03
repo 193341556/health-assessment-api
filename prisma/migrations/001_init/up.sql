@@ -28,8 +28,15 @@ CREATE TABLE IF NOT EXISTS assessment_records (
 CREATE TABLE IF NOT EXISTS assessment_results (
     session_id VARCHAR(64) PRIMARY KEY,
     bmi DECIMAL(8,2) NOT NULL,
+    bmi_category VARCHAR(20),
+    bmr INT,
+    tdee INT,
     recommended_kcal INT,
     target_date TIMESTAMP(3),
+    weekly_targets JSONB,
+    health_risks JSONB,
+    exercise_advice TEXT,
+    macros JSONB,
     computed_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_results_session FOREIGN KEY (session_id) REFERENCES assessment_sessions(session_id) ON DELETE CASCADE
 );

@@ -139,8 +139,15 @@ router.get('/result/:session_id', (req: Request, res: Response) => {
       res.json({
         session_id,
         bmi: result.bmi,
+        bmi_category: result.bmi_category,
+        bmr: result.bmr,
+        tdee: result.tdee,
         recommended_intake_kcal: result.recommended_kcal,
         target_date: result.target_date,
+        weekly_targets: result.weekly_targets,
+        health_risks: result.health_risks,
+        exercise_advice: result.exercise_advice,
+        macros: result.macros,
         computed_at: result.computed_at,
       });
     } else {
@@ -148,7 +155,16 @@ router.get('/result/:session_id', (req: Request, res: Response) => {
       res.json({
         session_id,
         bmi: result.bmi,
-        message: '开通会员查看完整报告',
+        bmi_category: result.bmi_category,
+        weekly_targets: null,
+        bmr: null,
+        tdee: null,
+        recommended_intake_kcal: null,
+        target_date: null,
+        health_risks: null,
+        exercise_advice: null,
+        macros: null,
+        message: '开通会员解锁完整报告（BMR/TDEE/热量/曲线/风险/建议）',
       });
     }
   } catch (error) {

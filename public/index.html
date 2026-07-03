@@ -500,9 +500,7 @@
     async function loadResult() {
       const res = await fetch(API_BASE + '/result/' + sessionId);
       const data = await res.json();
-      const isVip = data.recommended_intake_kcal !== undefined;
-
-      const bmiDesc = getBmiDesc(data.bmi);
+      const isVip = data.recommended_intake_kcal !== null;
 
       let html = '';
 
@@ -514,7 +512,7 @@
         <div class="result-card">
           <div class="bmi-label">您的 BMI</div>
           <div class="bmi-value">${data.bmi.toFixed(1)}</div>
-          <div class="bmi-desc">${bmiDesc}</div>
+          <div class="bmi-desc">${data.bmi_category || getBmiDesc(data.bmi)}</div>
         </div>
       `;
 
@@ -522,8 +520,28 @@
         html += `
           <div class="result-item">
             <div>
+              <div class="label">基础代谢率 BMR</div>
+              <div class="unit">躺平一天消耗</div>
+            </div>
+            <div>
+              <div class="value">${data.bmr}</div>
+              <div class="unit">千卡/天</div>
+            </div>
+          </div>
+          <div class="result-item">
+            <div>
+              <div class="label">每日总消耗 TDEE</div>
+              <div class="unit">含活动水平</div>
+            </div>
+            <div>
+              <div class="value">${data.tdee}</div>
+              <div class="unit">千卡/天</div>
+            </div>
+          </div>
+          <div class="result-item">
+            <div>
               <div class="label">每日推荐摄入</div>
-              <div class="unit">基于您的活动水平计算</div>
+              <div class="unit">根据目标计算</div>
             </div>
             <div>
               <div class="value">${data.recommended_intake_kcal}</div>
@@ -533,19 +551,55 @@
           <div class="result-item">
             <div>
               <div class="label">预计目标日期</div>
-              <div class="unit">按照每周0.75kg计算</div>
+              <div class="unit">每周减重0.75kg</div>
             </div>
             <div>
               <div class="value">${formatDate(data.target_date)}</div>
               <div class="unit">达成目标</div>
             </div>
           </div>
+          <div class="result-item">
+            <div>
+              <div class="label">三大营养素</div>
+              <div class="unit">蛋白质/碳水/脂肪</div>
+            </div>
+            <div>
+              <div class="value">${data.macros.protein_g}g / ${data.macros.carbs_g}g / ${data.macros.fat_g}g</div>
+              <div class="unit">每日摄入</div>
+            </div>
+          </div>
         `;
+
+        // 风险提示
+        if (data.health_risks && data.health_risks.length > 0) {
+          html += `<div class="result-item" style="flex-direction:column;align-items:flex-start">
+            <div class="label" style="margin-bottom:6px">⚠️ 健康提示</div>
+            ${data.health_risks.map(r => `<div style="font-size:13px;color:#e74c3c;margin:2px 0">${r}</div>`).join('')}
+          </div>`;
+        }
+
+        // 运动建议
+        if (data.exercise_advice) {
+          html += `<div class="result-item" style="flex-direction:column;align-items:flex-start">
+            <div class="label" style="margin-bottom:6px">🏃 运动建议</div>
+            <div style="font-size:14px;color:#333">${data.exercise_advice}</div>
+          </div>`;
+        }
+
+        // 每周曲线
+        if (data.weekly_targets && data.weekly_targets.length > 0) {
+          html += `<div class="result-item" style="flex-direction:column;align-items:flex-start">
+            <div class="label" style="margin-bottom:8px">📈 每周目标体重曲线</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${data.weekly_targets.map((w, i) => `<div style="background:#f0f0f0;padding:6px 10px;border-radius:8px;font-size:13px">第${i+1}周<br><strong>${w}kg</strong></div>`).join('')}
+            </div>
+          </div>`;
+        }
       } else {
         html += `
           <div class="locked-result">
             <div class="lock-icon">🔒</div>
-            <p>开通会员解锁完整报告<br>包含每日摄入量和目标日期</p>
+            <p>开通会员解锁完整报告<br>包含BMR/TDEE/热量/曲线/风险/建议</p>
             <button class="pay-btn" onclick="doPay()">开通会员 ￥9.9</button>
           </div>
         `;
