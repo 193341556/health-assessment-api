@@ -1,6 +1,8 @@
 // Prisma 数据库存储
 
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { randomUUID } from 'crypto';
 import {
   AssessmentSession,
@@ -17,7 +19,9 @@ let prisma: PrismaClient | null = null;
 
 function getPrisma(): PrismaClient {
   if (!prisma) {
-    prisma = new PrismaClient();
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ adapter });
   }
   return prisma;
 }
