@@ -136,14 +136,14 @@ router.get('/result/:session_id', async (req: Request, res: Response) => {
 
     // 检查订阅状态
     if (subscription?.status === 'active') {
-      // 会员返回完整结果（BigInt → Number 防止 Node.js 24 序列化报错）
+      // 会员返回完整结果
       res.json({
         session_id,
         bmi: result.bmi,
         bmi_category: result.bmi_category,
-        bmr: Number(result.bmr),
-        tdee: Number(result.tdee),
-        recommended_intake_kcal: Number(result.recommended_kcal),
+        bmr: result.bmr,
+        tdee: result.tdee,
+        recommended_intake_kcal: result.recommended_kcal,
         target_date: result.target_date,
         weekly_targets: result.weekly_targets,
         health_risks: result.health_risks,

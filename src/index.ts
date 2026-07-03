@@ -52,6 +52,17 @@ app.use((req, res, next) => {
 // body 解析
 app.use(express.json({ limit: '1mb' }));
 
+// 全局 BigInt → Number 转换（防止 Node.js 24 序列化报错）
+app.use((_req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = (body: unknown) => {
+    const replacer = (_key: string, value: unknown) =>
+      typeof value === 'bigint' ? Number(value) : value;
+    return originalJson(JSON.parse(JSON.stringify(body, replacer)));
+  };
+  next();
+});
+
 // 静态文件
 app.use(express.static(path.join(__dirname, '../public')));
 
