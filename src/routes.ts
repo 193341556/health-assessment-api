@@ -17,9 +17,9 @@ import { updateAssessmentSchema } from './validation';
 const router = Router();
 
 // POST /assessment - 创建新测评会话
-router.post('/assessment', (req: Request, res: Response) => {
+router.post('/assessment', async (req: Request, res: Response) => {
   try {
-    const session = createAssessment();
+    const session = await createAssessment();
     res.status(201).json({
       session_id: session.session_id,
       current_step: 0,
@@ -31,10 +31,10 @@ router.post('/assessment', (req: Request, res: Response) => {
 });
 
 // GET /assessment/:session_id - 获取测评进度
-router.get('/assessment/:session_id', (req: Request, res: Response) => {
+router.get('/assessment/:session_id', async (req: Request, res: Response) => {
   try {
     const session_id = req.params.session_id as string;
-    const record = getRecord(session_id);
+    const record = await getRecord(session_id);
 
     if (!record) {
       res.status(404).json({ error: '测评记录不存在' });
@@ -48,7 +48,7 @@ router.get('/assessment/:session_id', (req: Request, res: Response) => {
 });
 
 // PATCH /assessment/:session_id - 分步保存
-router.patch('/assessment/:session_id', (req: Request, res: Response) => {
+router.patch('/assessment/:session_id', async (req: Request, res: Response) => {
   try {
     const session_id = req.params.session_id as string;
 
@@ -59,7 +59,7 @@ router.patch('/assessment/:session_id', (req: Request, res: Response) => {
       return;
     }
 
-    const record = updateRecord(session_id, parsed.data);
+    const record = await updateRecord(session_id, parsed.data);
 
     if (!record) {
       res.status(404).json({ error: '测评记录不存在' });
@@ -73,10 +73,10 @@ router.patch('/assessment/:session_id', (req: Request, res: Response) => {
 });
 
 // POST /assessment/:session_id/submit - 触发计算
-router.post('/assessment/:session_id/submit', (req: Request, res: Response) => {
+router.post('/assessment/:session_id/submit', async (req: Request, res: Response) => {
   try {
     const session_id = req.params.session_id as string;
-    const record = getRecord(session_id);
+    const record = await getRecord(session_id);
 
     if (!record) {
       res.status(404).json({ error: '测评记录不存在' });
@@ -100,10 +100,10 @@ router.post('/assessment/:session_id/submit', (req: Request, res: Response) => {
     });
 
     // 保存结果
-    const result = createResult(session_id, computed);
+    const result = await createResult(session_id, computed);
 
     // 更新记录状态
-    updateRecord(session_id, { status: 'completed' });
+    await updateRecord(session_id, { status: 'completed' });
 
     res.json({
       session_id,
@@ -117,12 +117,12 @@ router.post('/assessment/:session_id/submit', (req: Request, res: Response) => {
 });
 
 // GET /result/:session_id - 差异化结果返回
-router.get('/result/:session_id', (req: Request, res: Response) => {
+router.get('/result/:session_id', async (req: Request, res: Response) => {
   try {
     const session_id = req.params.session_id as string;
-    const record = getRecord(session_id);
-    const result = getResult(session_id);
-    const subscription = getSubscription(session_id);
+    const record = await getRecord(session_id);
+    const result = await getResult(session_id);
+    const subscription = await getSubscription(session_id);
 
     if (!record) {
       res.status(404).json({ error: '测评记录不存在' });
@@ -174,10 +174,10 @@ router.get('/result/:session_id', (req: Request, res: Response) => {
 });
 
 // POST /pay/:session_id - 模拟支付
-router.post('/pay/:session_id', (req: Request, res: Response) => {
+router.post('/pay/:session_id', async (req: Request, res: Response) => {
   try {
     const session_id = req.params.session_id as string;
-    const subscription = getSubscription(session_id);
+    const subscription = await getSubscription(session_id);
 
     if (!subscription) {
       res.status(404).json({ error: '订阅记录不存在' });
@@ -185,7 +185,7 @@ router.post('/pay/:session_id', (req: Request, res: Response) => {
     }
 
     // 幂等：重复调用不报错
-    const activated = activateSubscription(session_id);
+    const activated = await activateSubscription(session_id);
 
     res.json({
       session_id,

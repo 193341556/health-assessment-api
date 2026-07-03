@@ -12,7 +12,6 @@ import {
   Gender,
   ActivityLevel,
   AssessmentStatus,
-  SubscriptionStatus,
 } from './types';
 
 let prisma: PrismaClient | null = null;
@@ -28,33 +27,31 @@ function getPrisma(): PrismaClient {
 
 // ============ Session 操作 ============
 
-export function createSession(): AssessmentSession {
+export async function createSession(): Promise<AssessmentSession> {
   const session_id = randomUUID().replace(/-/g, '');
   const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-  const session = getPrisma().assessmentSessions.create({
+  return getPrisma().assessmentSessions.create({
     data: { session_id, expires_at },
-  });
-  return session as unknown as AssessmentSession;
+  }) as unknown as Promise<AssessmentSession>;
 }
 
-export function getSession(session_id: string): AssessmentSession | undefined {
-  return getPrisma().assessmentSessions.findUnique({ where: { session_id } }) as unknown as AssessmentSession | undefined;
+export async function getSession(session_id: string): Promise<AssessmentSession | undefined> {
+  return getPrisma().assessmentSessions.findUnique({ where: { session_id } }) as unknown as Promise<AssessmentSession | undefined>;
 }
 
 // ============ Record 操作 ============
 
-export function createRecord(session_id: string): AssessmentRecord {
+export async function createRecord(session_id: string): Promise<AssessmentRecord> {
   return getPrisma().assessmentRecords.create({
     data: { session_id },
-  }) as unknown as AssessmentRecord;
+  }) as unknown as Promise<AssessmentRecord>;
 }
 
-export function getRecord(session_id: string): AssessmentRecord | undefined {
-  return getPrisma().assessmentRecords.findUnique({ where: { session_id } }) as unknown as AssessmentRecord | undefined;
+export async function getRecord(session_id: string): Promise<AssessmentRecord | undefined> {
+  return getPrisma().assessmentRecords.findUnique({ where: { session_id } }) as unknown as Promise<AssessmentRecord | undefined>;
 }
 
-export function updateRecord(
+export async function updateRecord(
   session_id: string,
   data: Partial<{
     gender: Gender | null;
@@ -67,7 +64,7 @@ export function updateRecord(
     current_step: number;
     status: AssessmentStatus;
   }>
-): AssessmentRecord | undefined {
+): Promise<AssessmentRecord | undefined> {
   return getPrisma().assessmentRecords.update({
     where: { session_id },
     data: {
@@ -81,12 +78,12 @@ export function updateRecord(
       ...(data.current_step !== undefined && { current_step: data.current_step }),
       ...(data.status !== undefined && { status: data.status }),
     },
-  }) as unknown as AssessmentRecord | undefined;
+  }) as unknown as Promise<AssessmentRecord | undefined>;
 }
 
 // ============ Result 操作 ============
 
-export function createResult(
+export async function createResult(
   session_id: string,
   data: {
     bmi: number;
@@ -100,7 +97,7 @@ export function createResult(
     exercise_advice: string;
     macros: { protein_g: number; carbs_g: number; fat_g: number };
   }
-): AssessmentResult {
+): Promise<AssessmentResult> {
   return getPrisma().assessmentResults.create({
     data: {
       session_id,
@@ -115,35 +112,35 @@ export function createResult(
       exercise_advice: data.exercise_advice,
       macros: data.macros,
     },
-  }) as unknown as AssessmentResult;
+  }) as unknown as Promise<AssessmentResult>;
 }
 
-export function getResult(session_id: string): AssessmentResult | undefined {
-  return getPrisma().assessmentResults.findUnique({ where: { session_id } }) as unknown as AssessmentResult | undefined;
+export async function getResult(session_id: string): Promise<AssessmentResult | undefined> {
+  return getPrisma().assessmentResults.findUnique({ where: { session_id } }) as unknown as Promise<AssessmentResult | undefined>;
 }
 
 // ============ Subscription 操作 ============
 
-export function createSubscription(session_id: string): Subscription {
+export async function createSubscription(session_id: string): Promise<Subscription> {
   return getPrisma().subscriptions.create({
     data: { session_id, status: 'none' },
-  }) as unknown as Subscription;
+  }) as unknown as Promise<Subscription>;
 }
 
-export function getSubscription(session_id: string): Subscription | undefined {
-  return getPrisma().subscriptions.findUnique({ where: { session_id } }) as unknown as Subscription | undefined;
+export async function getSubscription(session_id: string): Promise<Subscription | undefined> {
+  return getPrisma().subscriptions.findUnique({ where: { session_id } }) as unknown as Promise<Subscription | undefined>;
 }
 
-export function activateSubscription(session_id: string): Subscription | undefined {
+export async function activateSubscription(session_id: string): Promise<Subscription | undefined> {
   return getPrisma().subscriptions.update({
     where: { session_id },
     data: { status: 'active', expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-  }) as unknown as Subscription | undefined;
+  }) as unknown as Promise<Subscription | undefined>;
 }
 
 // ============ 业务逻辑封装 ============
 
-export function createAssessment(): AssessmentSession {
+export async function createAssessment(): Promise<AssessmentSession> {
   const session_id = randomUUID().replace(/-/g, '');
   const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -155,7 +152,7 @@ export function createAssessment(): AssessmentSession {
       subscriptions: { create: { session_id, status: 'none' } },
     },
     include: { records: true, subscriptions: true },
-  }) as unknown as AssessmentSession;
+  }) as unknown as Promise<AssessmentSession>;
 }
 
 export function isRecordComplete(record: AssessmentRecord): boolean {
