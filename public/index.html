@@ -527,7 +527,7 @@
       html += `
         <div class="result-card">
           <div class="bmi-label">您的 BMI</div>
-          <div class="bmi-value">${data.bmi.toFixed(1)}</div>
+          <div class="bmi-value">${typeof data.bmi === 'number' ? data.bmi.toFixed(1) : '--'}</div>
           <div class="bmi-desc">${data.bmi_category || getBmiDesc(data.bmi)}</div>
         </div>
       `;
