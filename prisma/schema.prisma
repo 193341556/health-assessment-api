@@ -30,6 +30,7 @@ model AssessmentRecords {
   current_step     Int      @default(0) @map("current_step")
   status           String   @default("draft") @map("status")
   updated_at       DateTime @updatedAt @map("updated_at")
+  version          Int      @default(0) @map("version")
 
   session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
 
@@ -52,6 +53,7 @@ model AssessmentResults {
 
   session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
 
+  @@unique([session_id])
   @@map("assessment_results")
 }
 

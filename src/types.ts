@@ -31,6 +31,7 @@ export interface AssessmentRecord {
   current_step: number;
   status: AssessmentStatus;
   updated_at: Date;
+  version: number;
 }
 
 // 测评结果表

@@ -65,28 +65,46 @@ export async function updateRecord(
     status: AssessmentStatus;
   }>
 ): Promise<AssessmentRecord | undefined> {
+  const current = await getRecord(session_id);
+  if (!current) return undefined;
+
   // current_step 只能前进，不能倒退
-  if (data.current_step !== undefined) {
-    const current = await getRecord(session_id);
-    if (current && data.current_step < current.current_step) {
-      data.current_step = current.current_step;
-    }
+  if (data.current_step !== undefined && data.current_step < current.current_step) {
+    data.current_step = current.current_step;
   }
 
-  return getPrisma().assessmentRecords.update({
-    where: { session_id },
-    data: {
-      ...(data.gender !== undefined && { gender: data.gender }),
-      ...(data.goal !== undefined && { goal: data.goal }),
-      ...(data.age !== undefined && { age: data.age }),
-      ...(data.height_cm !== undefined && { height_cm: data.height_cm }),
-      ...(data.weight_kg !== undefined && { weight_kg: data.weight_kg }),
-      ...(data.target_weight_kg !== undefined && { target_weight_kg: data.target_weight_kg }),
-      ...(data.activity_level !== undefined && { activity_level: data.activity_level }),
-      ...(data.current_step !== undefined && { current_step: data.current_step }),
-      ...(data.status !== undefined && { status: data.status }),
-    },
-  }) as unknown as Promise<AssessmentRecord | undefined>;
+  // 乐观锁：版本不匹配则重试一次
+  const MAX_RETRIES = 2;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await getPrisma().assessmentRecords.update({
+        where: { session_id, version: current.version },
+        data: {
+          ...(data.gender !== undefined && { gender: data.gender }),
+          ...(data.goal !== undefined && { goal: data.goal }),
+          ...(data.age !== undefined && { age: data.age }),
+          ...(data.height_cm !== undefined && { height_cm: data.height_cm }),
+          ...(data.weight_kg !== undefined && { weight_kg: data.weight_kg }),
+          ...(data.target_weight_kg !== undefined && { target_weight_kg: data.target_weight_kg }),
+          ...(data.activity_level !== undefined && { activity_level: data.activity_level }),
+          ...(data.current_step !== undefined && { current_step: data.current_step }),
+          ...(data.status !== undefined && { status: data.status }),
+          version: current.version + 1,
+        },
+      }) as unknown as Promise<AssessmentRecord | undefined>;
+    } catch (err: unknown) {
+      const isVersionError = (err as { code?: string }).code === 'P2034'; // Prisma version conflict
+      if (isVersionError && attempt < MAX_RETRIES - 1) {
+        // 重新获取最新版本后重试
+        const latest = await getRecord(session_id);
+        if (!latest) return undefined;
+        Object.assign(current, latest);
+        continue;
+      }
+      throw err;
+    }
+  }
+  return undefined;
 }
 
 // ============ Result 操作 ============
@@ -125,6 +143,41 @@ export async function createResult(
 
 export async function getResult(session_id: string): Promise<AssessmentResult | undefined> {
   return getPrisma().assessmentResults.findUnique({ where: { session_id } }) as unknown as Promise<AssessmentResult | undefined>;
+}
+
+// 幂等 upsert：已存在则返回已有结果，不重复创建
+export async function upsertResult(
+  session_id: string,
+  data: {
+    bmi: number;
+    bmi_category: string;
+    bmr: number;
+    tdee: number;
+    recommended_intake_kcal: number;
+    target_date: Date;
+    weekly_targets: number[];
+    health_risks: string[];
+    exercise_advice: string;
+    macros: { protein_g: number; carbs_g: number; fat_g: number };
+  }
+): Promise<AssessmentResult> {
+  return getPrisma().assessmentResults.upsert({
+    where: { session_id },
+    create: {
+      session_id,
+      bmi: data.bmi,
+      bmi_category: data.bmi_category,
+      bmr: data.bmr,
+      tdee: data.tdee,
+      recommended_kcal: data.recommended_intake_kcal,
+      target_date: data.target_date,
+      weekly_targets: data.weekly_targets,
+      health_risks: data.health_risks,
+      exercise_advice: data.exercise_advice,
+      macros: data.macros,
+    },
+    update: {},
+  }) as unknown as Promise<AssessmentResult>;
 }
 
 // ============ Subscription 操作 ============
@@ -185,4 +238,12 @@ export async function clearAllData(): Promise<void> {
 
 export async function disconnectPrisma(): Promise<void> {
   await getPrisma().$disconnect();
+}
+
+// 清理过期 session（每小时调用一次）
+export async function cleanupExpired(): Promise<number> {
+  const result = await getPrisma().assessmentSessions.deleteMany({
+    where: { expires_at: { lt: new Date() } },
+  });
+  return result.count;
 }

@@ -9,7 +9,7 @@ import {
   getSubscription,
   activateSubscription,
   isRecordComplete,
-  createResult,
+  upsertResult,
 } from './storage';
 import { computeAssessment } from './algorithm';
 import { updateAssessmentSchema } from './validation';
@@ -99,8 +99,8 @@ router.post('/assessment/:session_id/submit', async (req: Request, res: Response
       activity_level: record.activity_level!,
     });
 
-    // 保存结果
-    const result = await createResult(session_id, computed);
+    // 保存结果（幂等：重复提交不报错）
+    const result = await upsertResult(session_id, computed);
 
     // 更新记录状态
     await updateRecord(session_id, { status: 'completed' });

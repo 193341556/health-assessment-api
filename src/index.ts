@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import path from 'path';
 import routes from './routes';
+import { cleanupExpired } from './storage';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -98,5 +99,15 @@ app.get('/', (req, res) => {
 app.listen(PORT, HOST, () => {
   console.log(`健康测评后端服务运行在 http://localhost:${PORT}`);
 });
+
+// 每小时清理一次过期 session
+setInterval(async () => {
+  try {
+    const count = await cleanupExpired();
+    if (count > 0) console.log(`[cleanup] 删除了 ${count} 条过期记录`);
+  } catch (err) {
+    console.error('[cleanup] 清理失败:', err);
+  }
+}, 60 * 60 * 1000);
 
 export default app;
