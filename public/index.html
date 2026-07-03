@@ -368,6 +368,22 @@
                 const el = document.querySelector(`input[name="gender"][value="${data.gender}"]`);
                 if (el) selectRadio(el.parentElement, 'gender', data.gender);
               }
+              if (data.age) document.getElementById('age').value = data.age;
+              if (data.height_cm) document.getElementById('height_cm').value = data.height_cm;
+              if (data.weight_kg) document.getElementById('weight_kg').value = data.weight_kg;
+              if (data.target_weight_kg) document.getElementById('target_weight_kg').value = data.target_weight_kg;
+              if (data.activity_level) {
+                const al = document.querySelector(`input[name="activity_level"][value="${data.activity_level}"]`);
+                if (al) selectRadio(al.parentElement, 'activity_level', data.activity_level);
+              }
+              if (data.goal) {
+                const el = document.querySelector(`#goal option[value="${data.goal}"]`);
+                if (el) el.selected = true;
+              }
+              validateStep2();
+              validateStep3();
+              validateStep4();
+              validateStep5();
               return;
             }
           }
