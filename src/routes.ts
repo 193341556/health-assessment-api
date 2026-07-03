@@ -149,6 +149,7 @@ router.get('/result/:session_id', async (req: Request, res: Response) => {
         health_risks: result.health_risks,
         exercise_advice: result.exercise_advice,
         macros: result.macros,
+        target_weight_kg: record.target_weight_kg,
         computed_at: result.computed_at,
       });
     } else {

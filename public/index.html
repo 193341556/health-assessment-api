@@ -515,6 +515,93 @@
       }
     }
 
+    function drawWeightChart(weeklyTargets, targetWeight) {
+      const canvas = document.getElementById('weightChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+      const cw = w - pad.left - pad.right;
+      const ch = h - pad.top - pad.bottom;
+      const weeks = weeklyTargets.length;
+      const startWeight = weeklyTargets[0];
+      const minW = Math.min(...weeklyTargets) - 2;
+      const maxW = startWeight + 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 背景
+      ctx.fillStyle = '#f8f9fa';
+      ctx.fillRect(0, 0, w, h);
+
+      // 网格线
+      ctx.strokeStyle = '#e9ecef';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (ch / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + cw, y);
+        ctx.stroke();
+      }
+
+      // Y轴标签
+      ctx.fillStyle = '#888';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 4; i++) {
+        const val = maxW - (maxW - minW) * (i / 4);
+        const y = pad.top + (ch / 4) * i;
+        ctx.fillText(val.toFixed(0) + 'kg', pad.left - 8, y + 4);
+      }
+
+      // X轴标签
+      ctx.textAlign = 'center';
+      for (let i = 0; i < weeks; i++) {
+        if (i % Math.ceil(weeks / 6) === 0 || i === weeks - 1) {
+          const x = pad.left + (cw / (weeks - 1)) * i;
+          ctx.fillText('第' + (i + 1) + '周', x, h - pad.bottom + 16);
+        }
+      }
+
+      // 目标线（虚线）
+      const targetY = pad.top + ch - ((targetWeight - minW) / (maxW - minW)) * ch;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = '#e74c3c';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, targetY);
+      ctx.lineTo(pad.left + cw, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e74c3c';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('目标: ' + targetWeight + 'kg', pad.left + cw + 5, targetY + 4);
+
+      // 曲线
+      const stepX = cw / (weeks - 1);
+      ctx.beginPath();
+      ctx.strokeStyle = '#4a90d9';
+      ctx.lineWidth = 2.5;
+      weeklyTargets.forEach((wt, i) => {
+        const x = pad.left + stepX * i;
+        const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 数据点
+      weeklyTargets.forEach((wt, i) => {
+        const x = pad.left + stepX * i;
+        const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = i === weeks - 1 ? '#e74c3c' : '#4a90d9';
+        ctx.fill();
+      });
+    }
+
     async function loadResult() {
       const res = await fetch(API_BASE + '/result/' + sessionId);
       const data = await res.json();
@@ -608,10 +695,9 @@
         if (data.weekly_targets && data.weekly_targets.length > 0) {
           html += `<div class="result-item" style="flex-direction:column;align-items:flex-start">
             <div class="label" style="margin-bottom:8px">📈 每周目标体重曲线</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              ${data.weekly_targets.map((w, i) => `<div style="background:#f0f0f0;padding:6px 10px;border-radius:8px;font-size:13px">第${i+1}周<br><strong>${w}kg</strong></div>`).join('')}
-            </div>
+            <canvas id="weightChart" width="600" height="220" style="max-width:100%;border-radius:12px"></canvas>
           </div>`;
+          setTimeout(() => drawWeightChart(data.weekly_targets, data.target_weight_kg), 0);
         }
       } else {
         html += `
