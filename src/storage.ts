@@ -73,38 +73,20 @@ export async function updateRecord(
     data.current_step = current.current_step;
   }
 
-  // 乐观锁：版本不匹配则重试一次
-  const MAX_RETRIES = 2;
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      return await getPrisma().assessmentRecords.update({
-        where: { session_id, version: current.version },
-        data: {
-          ...(data.gender !== undefined && { gender: data.gender }),
-          ...(data.goal !== undefined && { goal: data.goal }),
-          ...(data.age !== undefined && { age: data.age }),
-          ...(data.height_cm !== undefined && { height_cm: data.height_cm }),
-          ...(data.weight_kg !== undefined && { weight_kg: data.weight_kg }),
-          ...(data.target_weight_kg !== undefined && { target_weight_kg: data.target_weight_kg }),
-          ...(data.activity_level !== undefined && { activity_level: data.activity_level }),
-          ...(data.current_step !== undefined && { current_step: data.current_step }),
-          ...(data.status !== undefined && { status: data.status }),
-          version: current.version + 1,
-        },
-      }) as unknown as Promise<AssessmentRecord | undefined>;
-    } catch (err: unknown) {
-      const isVersionError = (err as { code?: string }).code === 'P2034'; // Prisma version conflict
-      if (isVersionError && attempt < MAX_RETRIES - 1) {
-        // 重新获取最新版本后重试
-        const latest = await getRecord(session_id);
-        if (!latest) return undefined;
-        Object.assign(current, latest);
-        continue;
-      }
-      throw err;
-    }
-  }
-  return undefined;
+  return getPrisma().assessmentRecords.update({
+    where: { session_id },
+    data: {
+      ...(data.gender !== undefined && { gender: data.gender }),
+      ...(data.goal !== undefined && { goal: data.goal }),
+      ...(data.age !== undefined && { age: data.age }),
+      ...(data.height_cm !== undefined && { height_cm: data.height_cm }),
+      ...(data.weight_kg !== undefined && { weight_kg: data.weight_kg }),
+      ...(data.target_weight_kg !== undefined && { target_weight_kg: data.target_weight_kg }),
+      ...(data.activity_level !== undefined && { activity_level: data.activity_level }),
+      ...(data.current_step !== undefined && { current_step: data.current_step }),
+      ...(data.status !== undefined && { status: data.status }),
+    },
+  }) as unknown as Promise<AssessmentRecord | undefined>;
 }
 
 // ============ Result 操作 ============
