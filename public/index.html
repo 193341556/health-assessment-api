@@ -360,8 +360,8 @@
               // 恢复到之前的步骤
               sessionId = savedSessionId;
               currentStep = data.current_step;
-              updateProgress();
               renderStepIndicators();
+              updateProgress();
               showStep(currentStep);
               // 回填已填数据
               if (data.gender) {
