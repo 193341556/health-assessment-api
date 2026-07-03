@@ -516,6 +516,8 @@
     }
 
     function drawWeightChart(weeklyTargets, targetWeight) {
+      const targets = weeklyTargets.map(Number);
+      const startWeight = targets[0];
       const canvas = document.getElementById('weightChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -523,9 +525,8 @@
       const pad = { top: 20, right: 20, bottom: 40, left: 50 };
       const cw = w - pad.left - pad.right;
       const ch = h - pad.top - pad.bottom;
-      const weeks = weeklyTargets.length;
-      const startWeight = weeklyTargets[0];
-      const minW = Math.min(...weeklyTargets) - 2;
+      const weeks = targets.length;
+      const minW = Math.min(...targets) - 2;
       const maxW = startWeight + 2;
 
       ctx.clearRect(0, 0, w, h);
@@ -565,7 +566,7 @@
       }
 
       // 目标线（虚线）
-      const targetY = pad.top + ch - ((targetWeight - minW) / (maxW - minW)) * ch;
+      const targetY = pad.top + ch - ((Number(targetWeight) - minW) / (maxW - minW)) * ch;
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = '#e74c3c';
       ctx.lineWidth = 1.5;
@@ -577,14 +578,14 @@
       ctx.fillStyle = '#e74c3c';
       ctx.font = '11px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('目标: ' + targetWeight + 'kg', pad.left + cw + 5, targetY + 4);
+      ctx.fillText('目标: ' + Number(targetWeight).toFixed(1) + 'kg', pad.left + cw + 5, targetY + 4);
 
       // 曲线
       const stepX = cw / (weeks - 1);
       ctx.beginPath();
       ctx.strokeStyle = '#4a90d9';
       ctx.lineWidth = 2.5;
-      weeklyTargets.forEach((wt, i) => {
+      targets.forEach((wt, i) => {
         const x = pad.left + stepX * i;
         const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -592,7 +593,7 @@
       ctx.stroke();
 
       // 数据点
-      weeklyTargets.forEach((wt, i) => {
+      targets.forEach((wt, i) => {
         const x = pad.left + stepX * i;
         const y = pad.top + ch - ((wt - minW) / (maxW - minW)) * ch;
         ctx.beginPath();
@@ -616,7 +617,7 @@
       html += `
         <div class="result-card">
           <div class="bmi-label">您的 BMI</div>
-          <div class="bmi-value">${typeof data.bmi === 'number' ? data.bmi.toFixed(1) : '--'}</div>
+          <div class="bmi-value">${(data.bmi != null ? Number(data.bmi) : NaN).toFixed(1) || '--'}</div>
           <div class="bmi-desc">${data.bmi_category || getBmiDesc(data.bmi)}</div>
         </div>
       `;
