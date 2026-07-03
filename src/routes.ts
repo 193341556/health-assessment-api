@@ -191,6 +191,7 @@ router.post('/pay/:session_id', async (req: Request, res: Response) => {
     res.json({
       session_id,
       status: activated?.status,
+      paid_at: activated?.paid_at,
       message: '支付成功',
     });
   } catch (error) {
