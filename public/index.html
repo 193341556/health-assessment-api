@@ -344,9 +344,39 @@
     // 初始化
     async function init() {
       try {
+        // 尝试恢复已存在的 session
+        const savedSessionId = localStorage.getItem('session_id');
+        if (savedSessionId) {
+          const res = await fetch(API_BASE + '/assessment/' + savedSessionId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'completed') {
+              // 已完成，直接显示结果
+              sessionId = savedSessionId;
+              showStep(6);
+              loadResult();
+              return;
+            } else if (data.current_step) {
+              // 恢复到之前的步骤
+              sessionId = savedSessionId;
+              currentStep = data.current_step;
+              updateProgress();
+              renderStepIndicators();
+              showStep(currentStep);
+              // 回填已填数据
+              if (data.gender) {
+                const el = document.querySelector(`input[name="gender"][value="${data.gender}"]`);
+                if (el) selectRadio(el.parentElement, 'gender', data.gender);
+              }
+              return;
+            }
+          }
+        }
+        // 无 session 或已过期，创建新的
         const res = await fetch(API_BASE + '/assessment', { method: 'POST' });
         const data = await res.json();
         sessionId = data.session_id;
+        localStorage.setItem('session_id', sessionId);
         updateProgress();
         renderStepIndicators();
       } catch (e) {
