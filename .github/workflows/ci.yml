@@ -40,7 +40,7 @@ jobs:
 
       - run: npx prisma generate
 
-      - run: npx prisma db push --skip-generate
+      - run: npx prisma db push
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/health_test
 
