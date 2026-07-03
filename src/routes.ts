@@ -91,7 +91,7 @@ router.post('/assessment/:session_id/submit', async (req: Request, res: Response
 
     // 执行计算
     const computed = computeAssessment({
-      gender: record.gender!,
+      gender: record.gender ?? 'male',
       age: record.age!,
       height_cm: record.height_cm!,
       weight_kg: record.weight_kg!,

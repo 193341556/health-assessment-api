@@ -157,7 +157,6 @@ export async function createAssessment(): Promise<AssessmentSession> {
 
 export function isRecordComplete(record: AssessmentRecord): boolean {
   return (
-    record.gender !== null &&
     record.goal !== null &&
     record.age !== null &&
     record.height_cm !== null &&
