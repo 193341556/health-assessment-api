@@ -25,7 +25,8 @@ router.post('/assessment', (req: Request, res: Response) => {
       current_step: 0,
     });
   } catch (error) {
-    res.status(500).json({ error: '创建测评会话失败' });
+    console.error('创建会话失败:', error);
+    res.status(500).json({ error: '创建测评会话失败', detail: String(error) });
   }
 });
 
