@@ -321,24 +321,24 @@
 
     // 防抖定时器
     let debounceTimer = null;
-    let pendingSave = null;
+    const pendingSaves = {};
 
     function debounceSave(field, value) {
+      pendingSaves[field] = saveField(field, value);
       clearTimeout(debounceTimer);
-      pendingSave = saveField(field, value);
-      debounceTimer = setTimeout(() => {
-        pendingSave = null;
-        saveField(field, value);
+      debounceTimer = setTimeout(async () => {
+        const all = Object.values(pendingSaves);
+        pendingSaves.length = 0;
+        await Promise.all(all);
       }, 500);
     }
 
     // 立即冲洗 pending 保存并等待完成
     async function flushSave() {
       clearTimeout(debounceTimer);
-      if (pendingSave) {
-        await pendingSave;
-        pendingSave = null;
-      }
+      const all = Object.values(pendingSaves);
+      pendingSaves.length = 0;
+      await Promise.all(all);
     }
 
     // 初始化
