@@ -1,6 +1,6 @@
 // Prisma 数据库存储
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import {
   AssessmentSession,
