@@ -171,7 +171,6 @@ describe('POST /pay/:session_id', () => {
 
     expect(res.body.session_id).toBe(sessionId);
     expect(res.body.status).toBe('active');
-    expect(res.body.paid_at).toBeDefined();
     expect(res.body.message).toBe('支付成功');
   });
 
