@@ -177,7 +177,7 @@ export async function getSubscription(session_id: string): Promise<Subscription 
 export async function activateSubscription(session_id: string): Promise<Subscription | undefined> {
   return getPrisma().subscriptions.update({
     where: { session_id },
-    data: { status: 'active', paid_at: new Date(), expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+    data: { status: 'active', expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
   }) as unknown as Promise<Subscription | undefined>;
 }
 
