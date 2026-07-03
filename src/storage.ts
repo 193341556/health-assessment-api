@@ -1,5 +1,6 @@
-// 内存数据存储 - 实现 Prisma 类似的接口
+// Prisma 数据库存储
 
+import { PrismaClient, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import {
   AssessmentSession,
@@ -12,71 +13,41 @@ import {
   SubscriptionStatus,
 } from './types';
 
-// 内存数据库
-const sessions: Map<string, AssessmentSession> = new Map();
-const records: Map<string, AssessmentRecord> = new Map();
-const results: Map<string, AssessmentResult> = new Map();
-const subscriptions: Map<string, Subscription> = new Map();
+let prisma: PrismaClient | null = null;
 
-// 会话过期时间：24小时
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
-
-// 定期清理过期会话（每100次操作触发一次）
-let operationCounter = 0;
-function cleanupExpiredSessions(): void {
-  operationCounter++;
-  if (operationCounter % 100 !== 0) return;
-
-  const now = Date.now();
-  for (const [id, session] of sessions) {
-    if (now - session.created_at.getTime() > SESSION_TTL_MS) {
-      sessions.delete(id);
-      records.delete(id);
-      results.delete(id);
-      subscriptions.delete(id);
-    }
+function getPrisma(): PrismaClient {
+  if (!prisma) {
+    prisma = new PrismaClient();
   }
+  return prisma;
 }
 
 // ============ Session 操作 ============
 
 export function createSession(): AssessmentSession {
-  cleanupExpiredSessions();
   const session_id = randomUUID().replace(/-/g, '');
-  const session: AssessmentSession = {
-    session_id,
-    created_at: new Date(),
-  };
-  sessions.set(session_id, session);
-  return session;
+  const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const session = getPrisma().assessmentSessions.create({
+    data: { session_id, expires_at },
+  });
+  return session as unknown as AssessmentSession;
 }
 
 export function getSession(session_id: string): AssessmentSession | undefined {
-  return sessions.get(session_id);
+  return getPrisma().assessmentSessions.findUnique({ where: { session_id } }) as unknown as AssessmentSession | undefined;
 }
 
 // ============ Record 操作 ============
 
 export function createRecord(session_id: string): AssessmentRecord {
-  const record: AssessmentRecord = {
-    session_id,
-    gender: null,
-    goal: null,
-    age: null,
-    height_cm: null,
-    weight_kg: null,
-    target_weight_kg: null,
-    activity_level: null,
-    current_step: 0,
-    status: 'draft',
-    updated_at: new Date(),
-  };
-  records.set(session_id, record);
-  return record;
+  return getPrisma().assessmentRecords.create({
+    data: { session_id },
+  }) as unknown as AssessmentRecord;
 }
 
 export function getRecord(session_id: string): AssessmentRecord | undefined {
-  return records.get(session_id);
+  return getPrisma().assessmentRecords.findUnique({ where: { session_id } }) as unknown as AssessmentRecord | undefined;
 }
 
 export function updateRecord(
@@ -93,31 +64,20 @@ export function updateRecord(
     status: AssessmentStatus;
   }>
 ): AssessmentRecord | undefined {
-  const record = records.get(session_id);
-  if (!record) return undefined;
-  cleanupExpiredSessions();
-
-  // 只更新传入的字段
-  if (data.gender !== undefined) record.gender = data.gender;
-  if (data.goal !== undefined) record.goal = data.goal;
-  if (data.age !== undefined) record.age = data.age;
-  if (data.height_cm !== undefined) record.height_cm = data.height_cm;
-  if (data.weight_kg !== undefined) record.weight_kg = data.weight_kg;
-  if (data.target_weight_kg !== undefined) record.target_weight_kg = data.target_weight_kg;
-  if (data.activity_level !== undefined) record.activity_level = data.activity_level;
-
-  // current_step 只前进不倒退
-  if (data.current_step !== undefined) {
-    record.current_step = Math.max(record.current_step, data.current_step);
-  }
-
-  // status 可以更新
-  if (data.status !== undefined) {
-    record.status = data.status;
-  }
-
-  record.updated_at = new Date();
-  return record;
+  return getPrisma().assessmentRecords.update({
+    where: { session_id },
+    data: {
+      ...(data.gender !== undefined && { gender: data.gender }),
+      ...(data.goal !== undefined && { goal: data.goal }),
+      ...(data.age !== undefined && { age: data.age }),
+      ...(data.height_cm !== undefined && { height_cm: data.height_cm }),
+      ...(data.weight_kg !== undefined && { weight_kg: data.weight_kg }),
+      ...(data.target_weight_kg !== undefined && { target_weight_kg: data.target_weight_kg }),
+      ...(data.activity_level !== undefined && { activity_level: data.activity_level }),
+      ...(data.current_step !== undefined && { current_step: data.current_step }),
+      ...(data.status !== undefined && { status: data.status }),
+    },
+  }) as unknown as AssessmentRecord | undefined;
 }
 
 // ============ Result 操作 ============
@@ -126,51 +86,54 @@ export function createResult(
   session_id: string,
   data: { bmi: number; recommended_intake_kcal: number; target_date: Date }
 ): AssessmentResult {
-  const result: AssessmentResult = {
-    session_id,
-    ...data,
-    computed_at: new Date(),
-  };
-  results.set(session_id, result);
-  return result;
+  return getPrisma().assessmentResults.create({
+    data: {
+      session_id,
+      bmi: data.bmi,
+      recommended_kcal: data.recommended_intake_kcal,
+      target_date: data.target_date,
+    },
+  }) as unknown as AssessmentResult;
 }
 
 export function getResult(session_id: string): AssessmentResult | undefined {
-  return results.get(session_id);
+  return getPrisma().assessmentResults.findUnique({ where: { session_id } }) as unknown as AssessmentResult | undefined;
 }
 
 // ============ Subscription 操作 ============
 
 export function createSubscription(session_id: string): Subscription {
-  const subscription: Subscription = {
-    session_id,
-    status: 'inactive',
-    paid_at: null,
-  };
-  subscriptions.set(session_id, subscription);
-  return subscription;
+  return getPrisma().subscriptions.create({
+    data: { session_id, status: 'none' },
+  }) as unknown as Subscription;
 }
 
 export function getSubscription(session_id: string): Subscription | undefined {
-  return subscriptions.get(session_id);
+  return getPrisma().subscriptions.findUnique({ where: { session_id } }) as unknown as Subscription | undefined;
 }
 
 export function activateSubscription(session_id: string): Subscription | undefined {
-  const subscription = subscriptions.get(session_id);
-  if (!subscription) return undefined;
-
-  subscription.status = 'active';
-  subscription.paid_at = new Date();
-  return subscription;
+  return getPrisma().subscriptions.update({
+    where: { session_id },
+    data: { status: 'active', expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+  }) as unknown as Subscription | undefined;
 }
 
 // ============ 业务逻辑封装 ============
 
 export function createAssessment(): AssessmentSession {
-  const session = createSession();
-  createRecord(session.session_id);
-  createSubscription(session.session_id);
-  return session;
+  const session_id = randomUUID().replace(/-/g, '');
+  const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  return getPrisma().assessmentSessions.create({
+    data: {
+      session_id,
+      expires_at,
+      records: { create: { session_id } },
+      subscriptions: { create: { session_id, status: 'none' } },
+    },
+    include: { records: true, subscriptions: true },
+  }) as unknown as AssessmentSession;
 }
 
 export function isRecordComplete(record: AssessmentRecord): boolean {
@@ -187,9 +150,13 @@ export function isRecordComplete(record: AssessmentRecord): boolean {
 
 // ============ 测试辅助 ============
 
-export function clearAllData(): void {
-  sessions.clear();
-  records.clear();
-  results.clear();
-  subscriptions.clear();
+export async function clearAllData(): Promise<void> {
+  await getPrisma().assessmentResults.deleteMany();
+  await getPrisma().assessmentRecords.deleteMany();
+  await getPrisma().subscriptions.deleteMany();
+  await getPrisma().assessmentSessions.deleteMany();
+}
+
+export async function disconnectPrisma(): Promise<void> {
+  await getPrisma().$disconnect();
 }

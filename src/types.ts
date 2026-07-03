@@ -1,14 +1,15 @@
 // 核心类型定义
 
-export type Gender = 'male' | 'female' | 'other';
+export type Gender = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 export type AssessmentStatus = 'draft' | 'completed';
-export type SubscriptionStatus = 'inactive' | 'active';
+export type SubscriptionStatus = 'none' | 'active' | 'expired';
 
 // 会话表
 export interface AssessmentSession {
-  session_id: string; // uuid4 hex, 32 chars
+  session_id: string;
   created_at: Date;
+  expires_at: Date;
 }
 
 // 测评记录表
@@ -30,8 +31,8 @@ export interface AssessmentRecord {
 export interface AssessmentResult {
   session_id: string;
   bmi: number;
-  recommended_intake_kcal: number;
-  target_date: Date;
+  recommended_kcal: number | null;
+  target_date: Date | null;
   computed_at: Date;
 }
 
@@ -39,7 +40,8 @@ export interface AssessmentResult {
 export interface Subscription {
   session_id: string;
   status: SubscriptionStatus;
-  paid_at: Date | null;
+  created_at: Date;
+  expires_at: Date | null;
 }
 
 // API 请求/响应类型
@@ -59,9 +61,7 @@ export interface UpdateAssessmentRequest {
   current_step?: number;
 }
 
-export interface GetAssessmentResponse extends AssessmentRecord {
-  // 继承 AssessmentRecord 的所有字段
-}
+export interface GetAssessmentResponse extends AssessmentRecord {}
 
 export interface SubmitAssessmentResponse {
   session_id: string;
@@ -82,9 +82,9 @@ export interface ResultResponseFull extends AssessmentResult {
 
 // 边界值常量
 export const VALIDATION = {
-  age: { min: 1, max: 120 },
-  height_cm: { min: 50, max: 260 },
-  weight_kg: { min: 15, max: 500 },
-  target_weight_kg: { min: 15, max: 500 },
-  weight_change_threshold: 0.6, // 目标体重与当前体重差距超过 60% 视为不合理
+  age: { min: 10, max: 100 },
+  height_cm: { min: 100, max: 250 },
+  weight_kg: { min: 30, max: 300 },
+  target_weight_kg: { min: 30, max: 300 },
+  weight_change_threshold: 0.6,
 } as const;

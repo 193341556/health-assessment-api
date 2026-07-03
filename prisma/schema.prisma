@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AssessmentSessions {
+  session_id  String   @id
+  created_at  DateTime @default(now()) @map("created_at")
+  expires_at  DateTime @map("expires_at")
+
+  records       AssessmentRecords?
+  results       AssessmentResults?
+  subscriptions Subscriptions?
+
+  @@map("assessment_sessions")
+}
+
+model AssessmentRecords {
+  session_id       String   @id
+  gender           String?  @map("gender")
+  age              Int?     @map("age")
+  height_cm        Decimal? @map("height_cm")
+  weight_kg        Decimal? @map("weight_kg")
+  target_weight_kg Decimal? @map("target_weight_kg")
+  activity_level   String?  @map("activity_level")
+  goal             String?  @map("goal")
+  current_step     Int      @default(0) @map("current_step")
+  status           String   @default("draft") @map("status")
+  updated_at       DateTime @updatedAt @map("updated_at")
+
+  session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+
+  @@map("assessment_records")
+}
+
+model AssessmentResults {
+  session_id       String   @id
+  bmi              Decimal  @map("bmi")
+  recommended_kcal Int?     @map("recommended_kcal")
+  target_date      DateTime? @map("target_date")
+  computed_at      DateTime @default(now()) @map("computed_at")
+
+  session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+
+  @@map("assessment_results")
+}
+
+model Subscriptions {
+  session_id  String    @id
+  status      String    @default("none") @map("status")
+  created_at  DateTime  @default(now()) @map("created_at")
+  expires_at  DateTime? @map("expires_at")
+
+  session AssessmentSessions @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}

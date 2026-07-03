@@ -139,7 +139,7 @@ router.get('/result/:session_id', (req: Request, res: Response) => {
       res.json({
         session_id,
         bmi: result.bmi,
-        recommended_intake_kcal: result.recommended_intake_kcal,
+        recommended_intake_kcal: result.recommended_kcal,
         target_date: result.target_date,
         computed_at: result.computed_at,
       });
@@ -173,7 +173,6 @@ router.post('/pay/:session_id', (req: Request, res: Response) => {
     res.json({
       session_id,
       status: activated?.status,
-      paid_at: activated?.paid_at,
       message: '支付成功',
     });
   } catch (error) {
