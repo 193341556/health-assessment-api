@@ -4,12 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "prisma generate && tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
-    "test:coverage": "jest --coverage",
-    "postinstall": "prisma generate"
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
