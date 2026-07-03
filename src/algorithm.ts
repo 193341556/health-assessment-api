@@ -136,24 +136,23 @@ export function calculateTargetDate(
 
 /**
  * 计算每周目标体重曲线
- * 返回从当前到目标每周的体重数组
+ * 使用指数衰减：开头快，后期慢，更符合真实减重节奏
  */
 export function calculateWeeklyTargets(
   currentWeight: number,
   targetWeight: number
 ): number[] {
   const weightDiff = Math.abs(currentWeight - targetWeight);
-  const weeklyLoss = 0.75; // 每周减重 0.75kg
-  const weeks = Math.ceil(weightDiff / weeklyLoss);
+  const isGain = targetWeight > currentWeight;
+  const decay = 0.75; // 指数衰减参数
+  const weeks = Math.max(4, Math.min(Math.ceil(weightDiff / 0.6), 20));
 
   const targets: number[] = [];
   for (let week = 1; week <= weeks; week++) {
-    const lost = week * weeklyLoss;
-    const isGain = targetWeight > currentWeight;
+    const diff = weightDiff * Math.pow(decay, week);
     const weight = isGain
-      ? currentWeight + lost
-      : currentWeight - lost;
-    // 确保不会超过目标
+      ? currentWeight + (weightDiff - diff)
+      : currentWeight - (weightDiff - diff);
     const finalWeight = isGain
       ? Math.min(weight, targetWeight)
       : Math.max(weight, targetWeight);
